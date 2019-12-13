@@ -1,0 +1,77 @@
+---
+title: "Project -intro to machine learning"
+author: "Santiago ruiz navas"
+date: "12/11/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(caret)
+training <- read.csv("data/pml-training.csv", stringsAsFactors = F)
+set.seed(123)
+training.nona    <- training[,!is.na(training[1,])]
+training.noempty <- training.nona[,training.nona [1,]!=""]
+training.data     <- training.noempty[,-c(1:7)]
+```
+
+# Executive summary
+ The objective of this report is to build a classification model to classify how an athlete executes the Unilateral Dumbbell Biceps Curl exercice based on five qualitative judgments. The dataset consists of 159 variables and the outcome variable "classe".Seven of the 159 variables are informative, and the rest 152 are sensor data. The objective of this test is to use sensor data to predict the classe of the exercise for 20 cases provided by the instructors. </br>
+  The strategy to find the model consisted of four steps. First, read the information about the dataset and the paper on it. Explore the dataset and select predictors and data preprocessing steps. Create and compare six models, decision tree, boosted tree model, random forest, and LDA. Finally, evaluating the models against a validation set sampled from the training set provided by the instructors. </br>
+RESULTS: <br> 
++ The **selected model for this task was a random forest with an in-sample accuracy of 99.4% and expected out-of-sample accuracy of 99.29%**.<br>
++ **Five repetitions of cross-validation* were used for each model *with the train command of the caret package**.<br>
++ **The out of sample accuracy was calculated by subdividing the training data provided by the instructors in a training and validation sets and evaluating the models in the validation subdivision**.<br>  
+
+# Model 
+ The seed for all the calculations in this report was 123 <br>
+ ```{r ,seed, echo=F}
+ set.seed(123)
+ ```
+  The strategy to build the model consisted of four steps:
+
+1. **Read the information of the dataset and the paper on it** <br>
+The paper (Velloso, et al., 2013) informed us about the nature of the variables and the selected features by the authors to construct their random forest model. The main finding of this step was that the possible best model was a random forest.   <br> 
+
+2. **Explore the dataset and select predictors and data preprocessing steps** <br>
+The exploration of the dataset showed three issues, the presence of empty and NA values, variables used to compress information about the sensor data such as skewness, variance and max or min (Table 1 in the Annex); and different dimensions of the data (Table 2 in the Annex). The first and second issues were solved by dropping the variables that compressed information and creating the model based on the raw sensor data. The third issue was solved by scaling and centering, just for the sake of it, I ran as well a close to zero check, but, all the selected predictors passed it. <br><br>
+
++ I decided to drop the variables compressing information because all the information they were giving was already contained in the raw data and keeping them made the dataset a little bit messy.<br>
++ I decided to drop the name, time and window information variables because the idea I had of the model or the experiment the authors were doing was to predict from sensor data how the exercise was executed, therefore the information of who performed it or when he/she executed it was relevant for the model.<br>
+
+3. **Create and compare six models, decision tree, boosted tree model, random forest and LDA** <br>
+Six models were created using based on the tutor's recommendations (link). The six models created were a decision tree, a boosted tree model, random forest, and LDA. The models were created using the caret package and setting a * five repetition cross-validation* (Code snip 1 in Annex).  <br>
++ I decided to do five tree-based models because of the tip from the paper that the random forest gave good performance and added the LDA to see how it performed, it was the fastest to be trained but did not perform as good as the random forest. <br>
+ 
+4. **Evaluating the models against a validation set sampled from the training set provided by the instructors**<br>
+I used the accuracy information provided by the train command of the caret package and a subdivision of the training dataset provided by the instructors to evaluate the in-sample and expected out-of-sample errors of the models (Code snip 2 in Annex). <br> 
++ I decided to subdivide the training test, because, it was an effective way to test the model with new data. I tried to do the leave one out test (as in Velloso, et al., 2013), but, it took to long and could not see the results.<br>
+
+# Prediction
+The prediction results will be provided on the platform <br>
+```{r ,setup1, echo=F}
+
+```
+# ANNEX
+
+Table 1. Na and empty values in the training dataset provided by the instructors
+```{r ,training0, echo=TRUE}
+print(training[1:3,7:20])
+```
+Table 2. different dimensions of data. for example, variables with acceleration and angle
+```{r ,training1, echo=TRUE}
+summary(training[1:3,c("roll_belt","total_accel_belt")])
+```
+Code snip 1. Control vector used in the train command for the 6 models. 
+```{r ,codesnip1, echo=TRUE}
+fitControl.cv <- trainControl(method = "cv",
+                              number = 5,
+                              allowParallel = TRUE)
+```
+Code snip 2. Subdivision of the training dataset to create a validation dataset and calculate an expected out-of-sample error/acurracy. 
+```{r ,codesnip2, echo=TRUE}
+i <- createDataPartition(y=training.data$classe,
+                               p=0.7, list=FALSE)
+validation.trainning.data   <- training.data[i,]
+validation.test.data        <- training.data[-i,]
+```
